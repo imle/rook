@@ -21,8 +21,9 @@ import (
 	"path"
 	"testing"
 
-	"github.com/rook/rook/pkg/util"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/rook/rook/pkg/util"
 )
 
 func TestGetServiceMonitor(t *testing.T) {
@@ -34,6 +35,13 @@ func TestGetServiceMonitor(t *testing.T) {
 	assert.Equal(t, "rook-ceph", servicemonitor.GetNamespace())
 	assert.NotNil(t, servicemonitor.Spec.NamespaceSelector.MatchNames)
 	assert.NotNil(t, servicemonitor.Spec.Endpoints)
+	assert.Len(t, servicemonitor.Spec.Endpoints, 1)
+	assert.NotNil(t, servicemonitor.Spec.Endpoints[0])
+	assert.NotNil(t, servicemonitor.Spec.Endpoints[0].RelabelConfigs)
+	assert.Len(t, servicemonitor.Spec.Endpoints[0].RelabelConfigs, 1)
+	assert.Equal(t, []string{"rook_cluster"}, servicemonitor.Spec.Endpoints[0].RelabelConfigs[0].SourceLabels)
+	assert.Equal(t, "replace", servicemonitor.Spec.Endpoints[0].RelabelConfigs[0].Action)
+	assert.Equal(t, "cluster", servicemonitor.Spec.Endpoints[0].RelabelConfigs[0].TargetLabel)
 }
 
 func TestGetPrometheusRule(t *testing.T) {

@@ -63,6 +63,9 @@ const (
 	cephMgrPodMinimumMemory uint64 = 512
 	// DefaultMetricsPort prometheus exporter port
 	DefaultMetricsPort uint16 = 9283
+	// settings for metric relabling
+	monitoringRelablingAction      = "replace"
+	monitoringRelablingTargetLabel = "cluster"
 )
 
 // Cluster represents the Rook and environment configuration settings needed to set up Ceph mgrs.
@@ -443,9 +446,12 @@ func (c *Cluster) EnableServiceMonitor(activeDaemon string) error {
 	serviceMonitor.SetNamespace(c.clusterInfo.Namespace)
 	cephv1.GetMonitoringLabels(c.spec.Labels).ApplyToObjectMeta(&serviceMonitor.ObjectMeta)
 
+	endpoint := &serviceMonitor.Spec.Endpoints[0]
 	if c.spec.External.Enable {
-		serviceMonitor.Spec.Endpoints[0].Port = controller.ServiceExternalMetricName
+		endpoint.Port = controller.ServiceExternalMetricName
 	}
+	endpoint.RelabelConfigs[0].SourceLabels[0] = k8sutil.ClusterAttr
+
 	err = c.clusterInfo.OwnerInfo.SetControllerReference(serviceMonitor)
 	if err != nil {
 		return errors.Wrapf(err, "failed to set owner reference to service monitor %q", serviceMonitor.Name)
